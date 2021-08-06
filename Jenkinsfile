@@ -26,59 +26,56 @@ pipeline {
                 
                 sh 'docker build -t samplewebapp:latest .' 
                 sh 'docker tag samplewebapp sarvarayudu/javaapp:latest'
-                //sh 'docker tag samplewebapp nikhilnidhi/samplewebapp:$BUILD_NUMBER'
-               
+               	                 
           }
         }
      
-  stage('Publish image to Docker Hub') {
-          
-            steps {
-       // withDockerRegistry([ credentialsId: "DOCKER_HUB", url: "https://registry.hub.docker.com" ]) {
-         // sh  'docker push ishaqmd/jenkins:latest'
-          //sh  'docker push ishaqmd/jenkins:$BUILD_NUMBER'
-	withCredentials([string(credentialsId: 'Docker_User', variable: 'Docker_User'), string(credentialsId: 'Password', variable: 'Docker_Password')]) {
-            sh 'docker login -u $Docker_User -p $Docker_Password'
-              sh  'docker push sarvarayudu/javaapp:latest'
-        }
-                  
-          }
-        }
-     
-      stage('Run Docker container on Jenkins Agent') {
+       
+      stage('Run Docker') {
              
             steps 
 			{
-                sh "docker run -d -p 8008:8080 sarvarayudu/javaapp"
+                sh "docker run --name javaapp -d -p 8008:8080 sarvarayudu/javaapp"
 				sh 'sleep 10'
-				sh 'curl localhost:8080/hello'
-				sh 'sleep 10'
+				
 				
  
             }
         }
-	 stage('Test the container') {
+	 
+	 
+	 stage('Test') {
            steps {
                 
-               sh 'curl localhost:8080/hello'
-				sh 'sleep 10'
-               
+               sh 'curl localhost:8008/health'
+				sh 'sleep 20'
+               	                 
           }
         }
-	 stage('Delete the container') {
+ 
+	 stage('Delete infra') {
            steps {
                 
                 sh 'docker stop javaapp'
 				sh 'docker rm javaapp'
-               
+               	                 
           }
         }
- //stage('Run Docker container on remote hosts') {
-             
-   //         steps {
-     //           sh "docker -H ssh://jenkins@172.31.28.25 run -d -p 8003:8080 ishaqmd/jenkins"
- 
-           // }
-        //}
+	 
+	 stage('Publish image to Docker Hub') {
+          
+            steps {
+        
+		withCredentials([string(credentialsId: 'Docker_User', variable: 'Docker_User'), string(credentialsId: 'Password', variable: 'Docker_Password')]) {
+            sh 'docker login -u $Docker_User -p $Docker_Password'
+              sh  'docker push sarvarayudu/javaapp:latest'
+          }
+		  
+
+}
+        
+                  
+          
+  }
     }
 	}
